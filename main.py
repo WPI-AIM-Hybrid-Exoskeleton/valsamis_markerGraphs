@@ -39,15 +39,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 import numpy.polynomial.polynomial as poly
 
+import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+from GaitAnaylsisToolkit.LearningTools.Trainer import TPGMMTrainer, GMMTrainer, TPGMMTrainer_old
+from GaitAnaylsisToolkit.LearningTools.Runner import GMMRunner, TPGMMRunner_old
+from GaitAnaylsisToolkit.LearningTools.Runner import TPGMMRunner
+from scipy import signal
+from matplotlib.patches import Polygon
+from matplotlib.collections import PatchCollection
+import numpy as np
+import matplotlib
+from dtw import dtw
+import numpy.polynomial.polynomial as poly
+
 # cwd = os.getcwd()  # Get the current working directory (cwd)
 # files = os.listdir(cwd)  # Get all the files in that directory
 # print("Files in %r: %s" % (cwd, files))
 
-files = ["C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_05.csv",
+files = ["C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_01.csv",
         # "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_03.csv",
                                 #"C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_01.csv"
-         # "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_04.csv",          1   5    6   7    8   9
-         # "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_05.csv",
+         # "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_04.csv",  #        1   5    6   7    8   9
+         "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_05.csv",
          "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_06.csv",
          "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_07.csv",
          "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_08.csv",
@@ -69,6 +82,7 @@ def getMarker(files):
     segmentedX=[]
     segmentedY=[]
     segmentedZ=[]
+    segmented=[]
     segmentedBracketZ=[]
     segmentedBracketY = []
     length = len(files)
@@ -76,6 +90,7 @@ def getMarker(files):
     zeroX = 0
     zeroY = 0
     zeroZ = 0
+    fig, axs = plt.subplots(2)
     for file in files:
         print(file)
         trial = ViconGaitingTrial.ViconGaitingTrial(vicon_file=file)
@@ -142,26 +157,22 @@ def getMarker(files):
                 countT += 1
                 segT.append(t)
             if countT != -1:
-                if abs(segT[countT] - t) == 10 and len(segT) != 0:
+                if abs(segT[countT] - t) == 10 and len(segT) != 0 and countT > 70:
                     segmentedT.append(segT)
                     segT = []
                     countT = -1
-
-        print(segmentedT)
-        print("-------------------------------------------------------")
-        print("-------------------------------------------------------")
-        print("-------------------------------------------------------")
 
         for T in segmentedT:
 
             for value in T:
 
-                segX.append([X[value]])
-                segY.append([Y[value]])
+                segX.append(X[value])
+                segY.append(Y[value])
                 segZ.append(Z[value])
+                zeroY = segY[0]
 
             segmentedX.append(segX)
-            segmentedY.append(segY)
+            segmentedY.append(segY-zeroY)
             segmentedZ.append(segZ)
 
             segX = []
@@ -182,38 +193,20 @@ def getMarker(files):
         # plt.plot(segmentedX[i])
         # plt.plot(segmentedY[i])
         # print(segmentedY)
-        print(segmentedZ[i])
+        axs[0].plot(segmentedZ[i])
+        axs[1].plot(segmentedY[i])
 
-        plt.plot(segmentedZ[i])
 
+    segmented.append(segmentedZ)
+    segmented.append(segmentedY)
     plt.show()
-    return segmentedZ;
+    return segmented;
 
-arrayCurves = getMarker(files)
-print("---------------------------------------")
-print(arrayCurves[1])
-print("---------------------------------------")
+#arrayCurves = getMarker(files)
 
+def plotfunction(filename):
 
-def PolyTrain(arrayCurves,arrayCurves1, arrayCurves2):
-
-    z_prime = np.array(arrayCurves)
-    z_prime1 = np.array(arrayCurves1)
-    z_prime2 = np.array(arrayCurves2)
-    zaxis = []
-    zaxis.append(z_prime / 1000)
-    zaxis.append(z_prime1 / 1000)
-    zaxis.append(z_prime2 / 1000)
-
-    trainer = TPGMMTrainer.TPGMMTrainer(demo=[zaxis, zaxis],
-                                        file_name="simpletest",
-                                        n_rf=6,
-                                        dt=0.01,
-                                        reg=[1e-4],
-                                        poly_degree=[3, 3])
-
-    trainer.train()
-    runner = TPGMMRunner.TPGMMRunner("simpletest")
+    runner = TPGMMRunner.TPGMMRunner(filename)
 
     path = runner.run()
 
@@ -224,18 +217,198 @@ def PolyTrain(arrayCurves,arrayCurves1, arrayCurves2):
         axs[0].plot(p)
         axs[0].plot(path[:, 0], linewidth=4, color='black')
 
-    for p in zaxis:
+    for p in yaxis:
         axs[1].plot(p)
         axs[1].plot(path[:, 1], linewidth=4, color='black')
+    plt.show()
 
-    # for x in range(5):
-    #     my_data = runner._data["dtw"][1]
-    #     path1 = my_data[x]["path"][0]
-    #     axs[1].plot(path1)
+plotfunction("simpletest15")
+
+def PolyTrain(arrayCurves, file_name, bins=15, save=True):
+    zaxis = []
+    yaxis = []
+    for index in range(len(arrayCurves)):
+        if index == 0:
+            for value in range(len(arrayCurves[index])):
+                z_prime = np.array(arrayCurves[index][value])
+                zaxis.append(z_prime / 1000)
+        if index == 1:
+            for value in range(len(arrayCurves[index])):
+                y_prime = np.array(arrayCurves[index][value])
+                yaxis.append(y_prime / 1000)
+
+
+    trainer = TPGMMTrainer.TPGMMTrainer(demo=[zaxis, yaxis],
+                                        file_name="simpletest",
+                                        n_rf=bins,
+                                        dt=0.01,
+                                        reg=[1e-4],
+                                        poly_degree=[10, 10])
+
+    return trainer.train(save)
+    # runner = TPGMMRunner.TPGMMRunner("simpletest")
+    #
+    # path = runner.run()
+    #
+    # fig, axs = plt.subplots(2)
+    #
+    # print(path)
+    # for p in zaxis:
+    #     axs[0].plot(p)
+    #     axs[0].plot(path[:, 0], linewidth=4, color='black')
+    #
+    # for p in yaxis:
+    #     axs[1].plot(p)
+    #     axs[1].plot(path[:, 1], linewidth=4, color='black')
+    #
+    # # for x in range(5):
+    # #     my_data = runner._data["dtw"][1]
+    # #     path1 = my_data[x]["path"][0]
+    # #     axs[1].plot(path1)
+    # return trainer
+    # plt.show()
+
+ #trainer = PolyTrain(arrayCurves)
+
+def plot_gmm(Mu, Sigma, ax=None):
+    nbDrawingSeg = 35
+    t = np.linspace(-np.pi, np.pi, nbDrawingSeg)
+    X = []
+    nb_state = len(Mu[0])
+    patches = []
+
+    for i in range(nb_state):
+        w, v = np.linalg.eig(Sigma[i])
+        R = np.real(v.dot(np.lib.scimath.sqrt(np.diag(w))))
+        x = R.dot(np.array([np.cos(t), np.sin(t)])) + np.matlib.repmat(Mu[:, i].reshape((-1, 1)), 1, nbDrawingSeg)
+        x = x.transpose().tolist()
+        patches.append(Polygon(x, edgecolor='r'))
+        ax.plot(Mu[0, i], Mu[1, i], 'm*', linewidth=10)
+
+    p = PatchCollection(patches, edgecolor='k', color='green', alpha=0.8)
+    ax.add_collection(p)
+
+    return p
+
+def get_gmm(trainer):
+    font = {'family': 'normal',
+            'weight': 'bold',
+            'size': 30}
+
+    matplotlib.rc('font', **font)
+
+    nb_states = 10
+
+    runner = TPGMMRunner.TPGMMRunner(trainer)
+
+    fig0, ax = plt.subplots(2,sharex=True)
+
+    sIn = runner.get_sIn()
+    tau = runner.get_tau()
+    l = runner.get_length()
+    motion = runner.get_motion()
+    mu = runner.get_mu()
+    sigma = runner.get_sigma()
+    currF = runner.get_expData()
+
+    # plot the forcing functions
+    angles = get_data()
+    for i in range(len(angles["Lhip"])): # Hard code number of demonstrations
+        ax[0].plot(sIn, tau[1, i * l: (i + 1) * l].tolist(), color="b")
+        ax[1].plot(sIn, tau[2, i * l: (i + 1) * l].tolist(), color="b")
+
+
+    ax[0].plot(sIn, currF[0].tolist(), color="y", linewidth=5)
+    ax[1].plot(sIn, currF[1].tolist(), color="y", linewidth=5)
+
+
+    sigma0 = sigma[:, :3, :2]
+    sigma1 = sigma[:, :3, :2]
+
+
+    sigma1 = np.delete(sigma1, 1, axis=1)
+    sigma0 = np.delete(sigma0, 1, axis=1)
+
+
+    p = plot_gmm(Mu=np.array([mu[0,:], mu[1,:] ]), Sigma=sigma0, ax=ax[0])
+    p = plot_gmm(Mu=np.array([mu[0, :], mu[2, :]]), Sigma=sigma1, ax=ax[1])
+
+    fig0.suptitle('Forcing Function')
+
+
+    ax[0].set_ylabel('F')
+    ax[1].set_ylabel('F')
+
+
+    # fig0.tight_layout(pad=1.0, h_pad=0.15, w_pad=None, rect=None)
+    ax[0].set_title("Z Axis")
+    ax[1].set_title("Y Axis")
+
 
     plt.show()
 
-for index in range(len(arrayCurves)):  # This needs to be in bursts of 3 for each file  It doesnt work right now
-    if index % 3 == 0:
-        PolyTrain(arrayCurves[index],arrayCurves[index+1],arrayCurves[index+2])
+get_gmm("simpletest")
 
+
+def get_BIC(arrayCurves, file_name):
+
+    font = {'family': 'normal',
+            'weight': 'bold',
+            'size': 30}
+
+    matplotlib.rc('font', **font)
+
+    for j in range(1):
+        BIC = {}
+        for i in range(15,18):
+            print(i)
+            data = PolyTrain(arrayCurves, file_name+str(i), bins=i, save=True)
+            BIC[i] = data["BIC"]
+
+        plt.plot(list(BIC.keys()), list(BIC.values()))
+
+    plt.xlabel("Bins")
+    plt.ylabel("BIC")
+    plt.title("BIC score for Walking")
+    plt.show()
+
+
+
+
+def calculate_imitation_metric(file_name):
+    angles = get_data()
+    demos = [angles["zaxis"], angles["yaxis"]]
+    runner = TPGMMRunner.TPGMMRunner(file_name)
+    path = runner.run()
+    print(path[:,0])
+
+
+    alpha = 1.0
+    manhattan_distance = lambda x, y: abs(x - y)
+
+    costs = []
+    for i in range(3):
+        imitation = path[:, i]
+        T = len(imitation)
+        M = len(demos[i])
+        metric = 0.0
+        t = []
+        t.append(1.0)
+        for k in range(1, T):
+            t.append(t[k - 1] - alpha * t[k - 1] * 0.01)  # Update of decay term (ds/dt=-alpha s) )
+        t = np.array(t)
+
+        for m in range(M):
+            d, cost_matrix, acc_cost_matrix, path_im = dtw(imitation, demos[i][m], dist=manhattan_distance)
+            data_warp = [demos[i][m][path_im[1]][:imitation.shape[0]]]
+            coefs = poly.polyfit(t, data_warp[0], 20)
+            ffit = poly.Polynomial(coefs)
+            y_fit = ffit(t)
+            metric += np.sum(abs(y_fit - imitation.flatten()))
+
+        costs.append(metric / (M * T))
+        print("cost")
+        print(costs)
+    return costs
+
+get_BIC(arrayCurves, "simpletest")
