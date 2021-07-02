@@ -8,14 +8,14 @@ import numpy as np
 from GaitAnaylsisToolkit.Session import ViconGaitingTrial
 
 
-from generate_data_set_change import get_joint_angles
-from generate_data_set_change import get_data
-
-from generate_plots import gen_traj
-from generate_plots import plot_gmm
-from generate_plots import get_gmm
-from generate_plots import train_model
-from generate_plots import get_bic
+# from generate_data_set_change import get_joint_angles
+# from generate_data_set_change import get_data
+#
+# from generate_plots import gen_traj
+# from generate_plots import plot_gmm
+# from generate_plots import get_gmm
+# from generate_plots import train_model
+# from generate_plots import get_bic
 
 from GaitCore.Core import Point
 import matplotlib.pyplot as plt
@@ -56,15 +56,15 @@ import numpy.polynomial.polynomial as poly
 # files = os.listdir(cwd)  # Get all the files in that directory
 # print("Files in %r: %s" % (cwd, files))
 
-files = ["C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_01.csv",
-        # "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_03.csv",
-                                #"C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_01.csv"
+files = ["11_15_20_nathaniel_walking_01.csv",
+         # "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_03.csv",
+         #"C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_01.csv"
          # "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_04.csv",  #        1   5    6   7    8   9
-         "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_05.csv",
-         "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_06.csv",
-         "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_07.csv",
-         "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_08.csv",
-         "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_09.csv"]
+         "11_15_20_nathaniel_walking_05.csv",
+         "11_15_20_nathaniel_walking_06.csv",
+         "11_15_20_nathaniel_walking_07.csv",
+         "11_15_20_nathaniel_walking_08.csv",
+         "11_15_20_nathaniel_walking_09.csv"]
          # # "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/11_15_20_nathaniel_walking_10.csv"]
 
 #file = "C:/Users/jjval/OneDrive/Documents/Junior Year/ExoSkeleton/AIM_GaitData-master/Gaiting_stairs/subject_00/subject_00 walk_00.csv"
@@ -202,7 +202,7 @@ def getMarker(files):
     plt.show()
     return segmented;
 
-#arrayCurves = getMarker(files)
+arrayCurves = getMarker(files)
 
 def plotfunction(filename):
 
@@ -222,7 +222,6 @@ def plotfunction(filename):
         axs[1].plot(path[:, 1], linewidth=4, color='black')
     plt.show()
 
-plotfunction("simpletest15")
 
 def PolyTrain(arrayCurves, file_name, bins=15, save=True):
     zaxis = []
@@ -347,7 +346,7 @@ def get_gmm(trainer):
 
     plt.show()
 
-get_gmm("simpletest")
+# get_gmm("simpletest")
 
 
 def get_BIC(arrayCurves, file_name):
@@ -364,6 +363,7 @@ def get_BIC(arrayCurves, file_name):
             print(i)
             data = PolyTrain(arrayCurves, file_name+str(i), bins=i, save=True)
             BIC[i] = data["BIC"]
+            print(data["BIC"])
 
         plt.plot(list(BIC.keys()), list(BIC.values()))
 
